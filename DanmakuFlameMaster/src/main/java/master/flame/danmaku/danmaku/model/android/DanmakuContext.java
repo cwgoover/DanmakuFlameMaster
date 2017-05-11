@@ -1,4 +1,3 @@
-
 package master.flame.danmaku.danmaku.model.android;
 
 import android.graphics.Typeface;
@@ -647,7 +646,7 @@ public class DanmakuContext {
         this.cachingPolicy = cachingPolicy;
         return this;
     }
-    
+
     public interface ConfigChangedCallback {
         public boolean onDanmakuConfigChanged(DanmakuContext config, DanmakuConfigTag tag,
                 Object... value);

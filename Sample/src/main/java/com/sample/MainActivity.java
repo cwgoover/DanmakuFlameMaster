@@ -1,4 +1,3 @@
-
 package com.sample;
 
 import android.app.Activity;
@@ -178,7 +177,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             e.printStackTrace();
         }
         BaseDanmakuParser parser = new BiliDanmukuParser();
+        // tcao: return AndroidFileSrouces object
         IDataSource<?> dataSource = loader.getDataSource();
+        // tcao: mDataSource assignment in the BilidanmukuParser
         parser.load(dataSource);
         return parser;
 
@@ -224,6 +225,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //        .setCacheStuffer(new BackgroundCacheStuffer())  // 绘制背景使用BackgroundCacheStuffer
         .setMaximumLines(maxLinesPair)
         .preventOverlapping(overlappingEnablePair).setDanmakuMargin(40);
+        // 配置DanmuView
         if (mDanmakuView != null) {
             mParser = createParser(this.getResources().openRawResource(R.raw.comments));
             mDanmakuView.setCallback(new master.flame.danmaku.controller.DrawHandler.Callback() {
@@ -238,7 +240,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void danmakuShown(BaseDanmaku danmaku) {
-//                    Log.d("DFM", "danmakuShown(): text=" + danmaku.text);
+                    Log.d("DFM", "danmakuShown(): text=" + danmaku.text);
                 }
 
                 @Override
@@ -282,7 +284,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     mediaPlayer.start();
                 }
             });
-            mVideoView.setVideoPath(Environment.getExternalStorageDirectory() + "/1.flv");
+            mVideoView.setVideoPath(Environment.getExternalStorageDirectory() + "/video.mp4");
         }
 
     }
@@ -337,7 +339,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
         if (mDanmakuView == null || !mDanmakuView.isPrepared())
             return;
         if (v == mBtnRotate) {
-            setRequestedOrientation(getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE ? ActivityInfo.SCREEN_ORIENTATION_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            setRequestedOrientation(getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE ?
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT : ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else if (v == mBtnHideDanmaku) {
             mDanmakuView.hide();
             // mPausedPosition = mDanmakuView.hideAndPauseDrawTask();
@@ -395,7 +398,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
         danmaku.textSize = 25f * (mParser.getDisplayer().getDensity() - 0.6f);
         danmaku.textColor = Color.RED;
         danmaku.textShadowColor = Color.WHITE;
-        // danmaku.underlineColor = Color.GREEN;
+        danmaku.underlineColor = Color.GREEN;
         danmaku.borderColor = Color.GREEN;
         mDanmakuView.addDanmaku(danmaku);
 

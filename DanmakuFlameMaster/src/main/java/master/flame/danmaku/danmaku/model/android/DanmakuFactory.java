@@ -159,19 +159,19 @@ public class DanmakuFactory {
 
         BaseDanmaku instance = null;
         switch (type) {
-            case 1: // 从右往左滚动
+            case BaseDanmaku.TYPE_SCROLL_RL: // 从右往左滚动
                 instance = new R2LDanmaku(MAX_Duration_Scroll_Danmaku);
                 break;
-            case 4: // 底端固定
+            case BaseDanmaku.TYPE_FIX_BOTTOM: // 底端固定
                 instance = new FBDanmaku(MAX_Duration_Fix_Danmaku);
                 break;
-            case 5: // 顶端固定
+            case BaseDanmaku.TYPE_FIX_TOP: // 顶端固定
                 instance = new FTDanmaku(MAX_Duration_Fix_Danmaku);
                 break;
-            case 6: // 从左往右滚动
+            case BaseDanmaku.TYPE_SCROLL_LR: // 从左往右滚动
                 instance = new L2RDanmaku(MAX_Duration_Scroll_Danmaku);
                 break;
-            case 7: // 特殊弹幕
+            case BaseDanmaku.TYPE_SPECIAL: // 特殊弹幕
                 instance = new SpecialDanmaku();
                 sSpecialDanmakus.addItem(instance);
                 break;
