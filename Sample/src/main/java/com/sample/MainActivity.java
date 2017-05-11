@@ -51,6 +51,7 @@ import master.flame.danmaku.danmaku.parser.IDataSource;
 import master.flame.danmaku.danmaku.util.IOUtils;
 
 public class MainActivity extends Activity implements View.OnClickListener {
+    private final static String TAG = "DFM";
 
     private IDanmakuView mDanmakuView;
 
@@ -225,6 +226,15 @@ public class MainActivity extends Activity implements View.OnClickListener {
 //        .setCacheStuffer(new BackgroundCacheStuffer())  // 绘制背景使用BackgroundCacheStuffer
         .setMaximumLines(maxLinesPair)
         .preventOverlapping(overlappingEnablePair).setDanmakuMargin(40);
+
+        mContext.registerConfigChangedCallback(new DanmakuContext.ConfigChangedCallback() {
+            @Override
+            public boolean onDanmakuConfigChanged(DanmakuContext config, DanmakuContext.DanmakuConfigTag tag, Object... value) {
+                Log.d(TAG, "onDanmakuConfigChanged tag=" + tag + ", value=" + value.toString());
+                return false;
+            }
+        });
+
         // 配置DanmuView
         if (mDanmakuView != null) {
             mParser = createParser(this.getResources().openRawResource(R.raw.comments));
@@ -240,7 +250,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public void danmakuShown(BaseDanmaku danmaku) {
-                    Log.d("DFM", "danmakuShown(): text=" + danmaku.text);
+                    Log.d(TAG, "danmakuShown(): text=" + danmaku.text);
                 }
 
                 @Override
@@ -252,10 +262,10 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
                 @Override
                 public boolean onDanmakuClick(IDanmakus danmakus) {
-                    Log.d("DFM", "onDanmakuClick: danmakus size:" + danmakus.size());
+                    Log.d(TAG, "onDanmakuClick: danmakus size:" + danmakus.size());
                     BaseDanmaku latest = danmakus.last();
                     if (null != latest) {
-                        Log.d("DFM", "onDanmakuClick: text of latest danmaku:" + latest.text);
+                        Log.d(TAG, "onDanmakuClick: text of latest danmaku:" + latest.text);
                         return true;
                     }
                     return false;
@@ -312,6 +322,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
             // dont forget release!
             mDanmakuView.release();
             mDanmakuView = null;
+        }
+        if (mContext != null) {
+            mContext.unregisterAllConfigChangedCallbacks();
         }
     }
 

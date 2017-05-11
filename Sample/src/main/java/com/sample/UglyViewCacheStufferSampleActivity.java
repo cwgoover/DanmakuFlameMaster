@@ -312,6 +312,8 @@ public class UglyViewCacheStufferSampleActivity extends Activity implements View
 
         mIconWidth = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 30f, getResources().getDisplayMetrics());
         mContext.setDanmakuBold(true);
+//        mContext.setDanmakuMargin(40);
+        mContext.setMarginTop(100);
         mContext.setDanmakuStyle(IDisplayer.DANMAKU_STYLE_STROKEN, 3).setDuplicateMergingEnabled(false).setScrollSpeedFactor(1.2f).setScaleTextSize(1.2f)
                 .setCacheStuffer(new ViewCacheStuffer<MyViewHolder>() {
 

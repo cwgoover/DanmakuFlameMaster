@@ -23,7 +23,27 @@ public class DanmakuContext {
     }
 
     public enum DanmakuConfigTag {
-        FT_DANMAKU_VISIBILITY, FB_DANMAKU_VISIBILITY, L2R_DANMAKU_VISIBILITY, R2L_DANMAKU_VISIBILIY, SPECIAL_DANMAKU_VISIBILITY, TYPEFACE, TRANSPARENCY, SCALE_TEXTSIZE, MAXIMUM_NUMS_IN_SCREEN, DANMAKU_STYLE, DANMAKU_BOLD, COLOR_VALUE_WHITE_LIST, USER_ID_BLACK_LIST, USER_HASH_BLACK_LIST, SCROLL_SPEED_FACTOR, BLOCK_GUEST_DANMAKU, DUPLICATE_MERGING_ENABLED, MAXIMUN_LINES, OVERLAPPING_ENABLE, ALIGN_BOTTOM, DANMAKU_MARGIN;
+        FT_DANMAKU_VISIBILITY,
+        FB_DANMAKU_VISIBILITY,
+        L2R_DANMAKU_VISIBILITY,
+        R2L_DANMAKU_VISIBILIY,
+        SPECIAL_DANMAKU_VISIBILITY,
+        TYPEFACE,
+        TRANSPARENCY,
+        SCALE_TEXTSIZE,
+        MAXIMUM_NUMS_IN_SCREEN,
+        DANMAKU_STYLE,
+        DANMAKU_BOLD,
+        COLOR_VALUE_WHITE_LIST,
+        USER_ID_BLACK_LIST,
+        USER_HASH_BLACK_LIST,
+        SCROLL_SPEED_FACTOR,
+        BLOCK_GUEST_DANMAKU,
+        DUPLICATE_MERGING_ENABLED,
+        MAXIMUN_LINES,
+        OVERLAPPING_ENABLE,
+        ALIGN_BOTTOM,
+        DANMAKU_MARGIN;
 
         public boolean isVisibilityRelatedTag() {
             return this.equals(FT_DANMAKU_VISIBILITY) || this.equals(FB_DANMAKU_VISIBILITY)
@@ -96,6 +116,8 @@ public class DanmakuContext {
     List<Integer> mUserIdBlackList = new ArrayList<Integer>(); 
     
     List<String> mUserHashBlackList = new ArrayList<String>();
+
+    private final Object mLocker = new Object();
 
     private List<WeakReference<ConfigChangedCallback>> mCallbackList;
 
@@ -171,6 +193,7 @@ public class DanmakuContext {
         return this;
     }
 
+    // tcao: 设置margin可以给弹幕之前设置间距
     public DanmakuContext setDanmakuMargin(int m) {
         if (margin != m) {
             margin = m;
@@ -182,6 +205,11 @@ public class DanmakuContext {
         return this;
     }
 
+    /**
+     * 为整体的弹幕显示设置 margin top
+     * @param m
+     * @return
+     */
     public DanmakuContext setMarginTop(int m) {
         mDisplayer.setAllMarginTop(m);
         return this;
@@ -653,12 +681,20 @@ public class DanmakuContext {
     }
 
     public void registerConfigChangedCallback(ConfigChangedCallback listener) {
-        if (listener == null || mCallbackList == null) {
+        if (listener == null) {
+            return;
+        }
+        if (mCallbackList == null) {
+            // tcao:这里使用synchronizedList生成的list，根据java doc说明遍历的时候应该加synchronized同步块
+            // 推荐用CopyOnWriteArray can make your life easier and can provide better performance in a highly concurrent environment.
             mCallbackList = Collections.synchronizedList(new ArrayList<WeakReference<ConfigChangedCallback>>());
         }
-        for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
-            if (listener.equals(configReferer.get())) {
-                return;
+        // http://stackoverflow.com/a/11360502/4710864
+        synchronized (mLocker) {
+            for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
+                if (listener.equals(configReferer.get())) {
+                    return;
+                }
             }
         }
         mCallbackList.add(new WeakReference<ConfigChangedCallback>(listener));
@@ -667,10 +703,13 @@ public class DanmakuContext {
     public void unregisterConfigChangedCallback(ConfigChangedCallback listener) {
         if (listener == null || mCallbackList == null)
             return;
-        for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
-            if (listener.equals(configReferer.get())) {
-                mCallbackList.remove(listener);
-                return;
+
+        synchronized (mLocker) {
+            for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
+                if (listener.equals(configReferer.get())) {
+                    mCallbackList.remove(new WeakReference<>(listener));
+                    return;
+                }
             }
         }
     }
@@ -684,10 +723,12 @@ public class DanmakuContext {
 
     private void notifyConfigureChanged(DanmakuConfigTag tag, Object... values) {
         if (mCallbackList != null) {
-            for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
-                ConfigChangedCallback cb = configReferer.get();
-                if (cb != null) {
-                    cb.onDanmakuConfigChanged(this, tag, values);
+            synchronized (mLocker) {
+                for (WeakReference<ConfigChangedCallback> configReferer : mCallbackList) {
+                    ConfigChangedCallback cb = configReferer.get();
+                    if (cb != null) {
+                        cb.onDanmakuConfigChanged(this, tag, values);
+                    }
                 }
             }
         }
