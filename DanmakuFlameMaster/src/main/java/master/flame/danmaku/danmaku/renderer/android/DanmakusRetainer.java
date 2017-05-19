@@ -146,6 +146,7 @@ public class DanmakusRetainer {
                     firstItem = item;
 
                 if (drawItem.paintHeight + item.getTop() > disp.getHeight()) {
+                    // 此时insertItem为null
                     overwriteInsert = true;
                     return ACTION_BREAK;
                 }
@@ -185,6 +186,7 @@ public class DanmakusRetainer {
             }
         }
 
+        //保存需要显示的弹幕容器类（保存的一行只有一条弹幕，下面会说明），内部持有一个以弹幕的y坐标排序的TreeSet集合，这个需要注意
         protected Danmakus mVisibleDanmakus = new Danmakus(Danmakus.ST_BY_YPOS);
         protected boolean mCancelFixingFlag = false;
         protected RetainerConsumer mConsumer = new RetainerConsumer();
@@ -220,27 +222,36 @@ public class DanmakusRetainer {
                     willHit = retainerState.willHit;
                 }
                 boolean checkEdge = true;
-                if (insertItem != null) {
-                    if (lastItem != null)
+                if (insertItem != null) { //已经布局过了||目标弹幕不会碰壁可以插入
+                    if (lastItem != null) {
+                        // 目标弹幕插入，y值即为上一次遍历的弹幕的底部
+                        // 因为一个循环相当于一行（如果一行中有位置willHit肯定为false就跳出循环了，能进入下个循环，说明上一层都满了）
+                        // 所以这个循环找到的item应该在上次循环所在行的下面
                         topPos = lastItem.getBottom() + margin;
-                    else
+                    } else {
                         topPos = insertItem.getTop();
-                    if (insertItem != drawItem){
-                        removeItem = insertItem;
-                        shown = false;
                     }
-                } else if (overwriteInsert && minRightRow != null) {
-                    topPos = minRightRow.getTop();
+                    if (insertItem != drawItem){ // 如果不相等，说明是检查碰撞出来的，insertItem是drawItem的横排前一个弹幕
+                        //这里需要注意，因为一行可以放n多条弹幕，只要前后不碰撞就行；
+                        //所以下次我们在同一行插入弹幕判断碰壁时，当然要和这行最后一条弹幕去判断；
+                        //因此我们移除前一条弹幕，放入插入的目标弹幕，下次添加弹幕判断时就和目标弹幕判断，然后这么循环下去
+                        removeItem = insertItem;
+                        shown = false; //置为false，以便mVisibleDanmakus 添加还未布局的新弹幕
+                    }
+                } else if (overwriteInsert && minRightRow != null) { //如果可显示区域内没有找到插入位置(insertItem == null)，但是显示区域不止一行(一个循环后minRightRow肯定有值)
+                    // TODO：这里可能会造成重叠现象，相当于弹幕实在没地塞了就捡一个行中空隙最大的塞（要看后面layout时候怎么布x轴）
+                    topPos = minRightRow.getTop(); // 放在所有行中最后一个弹幕最靠左的那一行，相当于所有行中最短的那一行
                     checkEdge = false;
-                    shown = false;
-                } else if (lastItem != null) {
+                    shown = false; // TODO：这里还有个问题，光添加到行里但是没有删除同行的前一个，mVisibleDanmakus并不是每行只有最后一个弹幕，check！！！！
+                } else if (lastItem != null) { //如果mVisibleDanmakus里代表的行都满了但是还没有触底
                     topPos = lastItem.getBottom() + margin;
                     willHit = false;
-                } else if (firstItem != null) {
+                } else if (firstItem != null) { //走到这里只能是第一次进循环后就overwriteInsert = true了，否则怎么样都会有insertItem或者lastItem
+                    // 相当于弹幕可显示的区域只有一行的距离，注意这种情况并没有检查碰撞过
                     topPos = firstItem.getTop();
                     removeItem = firstItem;
                     shown = false;
-                } else {
+                } else { //mVisibleDanmakus 没有数据，截取弹幕集的第一条弹幕
                     topPos = disp.getAllMarginTop();
                 }
                 if (checkEdge) {
@@ -249,21 +260,22 @@ public class DanmakusRetainer {
                 }
                 if (isOutOfVertialEdge) {
                     topPos = disp.getAllMarginTop();
-                    willHit = true;
+                    willHit = true; //如果超出布局范围，等待河蟹
                     lines = 1;
                 } else if (removeItem != null) {
                     lines--;
                 }
                 if (topPos == disp.getAllMarginTop()) {
-                    shown = false;
+                    shown = false; //方便加入容器
                 }
             }
 
+            //TODO：这是河蟹规则，都是在设置DanmakuContext时指定的，比如最大行数限制，重复限制等等。
             if (verifier != null && verifier.skipLayout(drawItem, topPos, lines, willHit)) {
                 return;
             }
 
-            if (isOutOfVertialEdge) {
+            if (isOutOfVertialEdge) { //mVisibleDanmakus中所有弹幕绘制出来都超出范围了
                 clear();
             }
 
