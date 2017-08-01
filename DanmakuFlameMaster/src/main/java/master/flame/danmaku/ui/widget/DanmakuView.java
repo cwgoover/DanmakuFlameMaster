@@ -72,7 +72,7 @@ public class DanmakuView extends View implements IDanmakuView, IDanmakuViewContr
 
     protected int mDrawingThreadType = THREAD_TYPE_NORMAL_PRIORITY;
 
-    private Object mDrawMonitor = new Object();
+    private final Object mDrawMonitor = new Object();
 
     private boolean mDrawFinished = false;
 
@@ -164,9 +164,8 @@ public class DanmakuView extends View implements IDanmakuView, IDanmakuViewContr
         DrawHandler handler = this.handler;
         this.handler = null;
         unlockCanvasAndPost();
-        if (handler != null) {
-            handler.quit();
-        }
+        handler.quit();
+
         HandlerThread handlerThread = this.mHandlerThread;
         mHandlerThread = null;
         if (handlerThread != null) {
@@ -278,7 +277,7 @@ public class DanmakuView extends View implements IDanmakuView, IDanmakuViewContr
     }
 
     private void lockCanvas() {
-        if(mDanmakuVisible == false) {
+        if(!mDanmakuVisible) {
             return;
         }
         postInvalidateCompat();
@@ -287,7 +286,7 @@ public class DanmakuView extends View implements IDanmakuView, IDanmakuViewContr
                 try {
                     mDrawMonitor.wait(200);
                 } catch (InterruptedException e) {
-                    if (mDanmakuVisible == false || handler == null || handler.isStop()) {
+                    if (!mDanmakuVisible || handler == null || handler.isStop()) {
                         break;
                     } else {
                         Thread.currentThread().interrupt();
@@ -324,7 +323,7 @@ public class DanmakuView extends View implements IDanmakuView, IDanmakuViewContr
                 RenderingState rs = handler.draw(canvas);
                 if (mShowFps) {
                     if (mDrawTimes == null)
-                        mDrawTimes = new LinkedList<Long>();
+                        mDrawTimes = new LinkedList<>();
                     String fps = String.format(Locale.getDefault(),
                             "fps %.2f,time:%d s,cache:%d,miss:%d", fps(), getCurrentTime() / 1000,
                             rs.cacheHitCount, rs.cacheMissCount);

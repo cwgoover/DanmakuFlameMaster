@@ -28,13 +28,14 @@ public class DrawingCacheHolder {
 
     private int mDensity;
 
-    public DrawingCacheHolder() {
+    DrawingCacheHolder() {
 
     }
 
-    public void buildCache(int w, int h, int density, boolean checkSizeEquals, int bitsPerPixel) {
+    void buildCache(int w, int h, int density, boolean checkSizeEquals, int bitsPerPixel) {
         boolean reuse = checkSizeEquals ? (w == width && h == height) : (w <= width && h <= height);
         if (reuse && bitmap != null) {
+        // 如果当前cache的大小大于或者等于弹幕则重用这块cache
 //            canvas.drawColor(Color.TRANSPARENT);
 //            canvas.setBitmap(null);
             bitmap.eraseColor(Color.TRANSPARENT);
@@ -42,6 +43,7 @@ public class DrawingCacheHolder {
             recycleBitmapArray();
             return;
         }
+        // 如果没有重用则重新创建cache
         if (bitmap != null) {
             recycle();
         }
@@ -63,12 +65,12 @@ public class DrawingCacheHolder {
             canvas.setBitmap(bitmap);
     }
 
-    public void erase() {
+    void erase() {
         eraseBitmap(bitmap);
         eraseBitmapArray();
     }
 
-    public synchronized void recycle() {
+    synchronized void recycle() {
         Bitmap bitmapReserve = bitmap;
         bitmap = null;
         width = height = 0;

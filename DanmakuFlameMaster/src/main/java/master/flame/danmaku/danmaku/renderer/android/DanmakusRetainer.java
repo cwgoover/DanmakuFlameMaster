@@ -32,11 +32,11 @@ public class DanmakusRetainer {
 
     private IDanmakusRetainer fbdrInstance = null;
 
-    public DanmakusRetainer(boolean alignBottom) {
+    DanmakusRetainer(boolean alignBottom) {
         alignBottom(alignBottom);
     }
 
-    public void alignBottom(boolean alignBottom) {
+    void alignBottom(boolean alignBottom) {
         rldrInstance = alignBottom ? new AlignBottomRetainer() : new AlignTopRetainer();
         lrdrInstance = alignBottom ? new AlignBottomRetainer() : new AlignTopRetainer();
         if (ftdrInstance == null) {
@@ -47,7 +47,7 @@ public class DanmakusRetainer {
         }
     }
 
-    public void fix(BaseDanmaku danmaku, IDisplayer disp, Verifier verifier) {
+    void fix(BaseDanmaku danmaku, IDisplayer disp, Verifier verifier) {
 
         int type = danmaku.getType();
         switch (type) {
@@ -91,32 +91,32 @@ public class DanmakusRetainer {
 
     public interface Verifier {
 
-        public boolean skipLayout(BaseDanmaku danmaku, float fixedTop, int lines, boolean willHit);
+        boolean skipLayout(BaseDanmaku danmaku, float fixedTop, int lines, boolean willHit);
 
     }
 
     public interface IDanmakusRetainer {
 
-        public void fix(BaseDanmaku drawItem, IDisplayer disp, Verifier verifier);
+        void fix(BaseDanmaku drawItem, IDisplayer disp, Verifier verifier);
 
-        public void clear();
+        void clear();
 
     }
 
     private static class RetainerState {
-        public int lines = 0;
-        public BaseDanmaku insertItem = null, firstItem = null, lastItem = null, minRightRow = null, removeItem = null;
-        public boolean overwriteInsert = false;
-        public boolean shown = false;
-        public boolean willHit = false;
+        int lines = 0;
+        BaseDanmaku insertItem = null, firstItem = null, lastItem = null, minRightRow = null, removeItem = null;
+        boolean overwriteInsert = false;
+        boolean shown = false;
+        boolean willHit = false;
     }
 
 
     private static class AlignTopRetainer implements IDanmakusRetainer {
         protected class RetainerConsumer extends IDanmakus.Consumer<BaseDanmaku, RetainerState> {
-            public IDisplayer disp;
+            IDisplayer disp;
             int lines = 0;
-            public BaseDanmaku insertItem = null, firstItem = null, lastItem = null, minRightRow = null, drawItem = null;
+            BaseDanmaku insertItem = null, firstItem = null, lastItem = null, minRightRow = null, drawItem = null;
             boolean overwriteInsert = false;
             boolean shown = false;
             boolean willHit = false;
@@ -134,23 +134,29 @@ public class DanmakusRetainer {
                     return ACTION_BREAK;
                 }
                 lines++;
-                if(item == drawItem){
-                    insertItem = item;
+
+                //如果已经布局过了，说明已经存在自己位置了
+                if (item == drawItem) {
+                    insertItem = item; //将布局过的弹幕复制给参考弹幕insertItem
                     lastItem = null;
-                    shown = true;
+                    shown = true; //shown 置为true，以便末尾不再执行加入mVisibleDanmakus逻辑
                     willHit = false;
                     return ACTION_BREAK;
                 }
 
-                if (firstItem == null)
+                //从mVisibleDanmakus中找到第一行的弹幕（已经布局过的）
+                if (firstItem == null) {
                     firstItem = item;
+                }
 
+                //如果插入目标弹幕后，y值超过了视图高度
                 if (drawItem.paintHeight + item.getTop() > disp.getHeight()) {
                     // 此时insertItem为null
-                    overwriteInsert = true;
+                    overwriteInsert = true;  // overwriteInsert只有这里会被设成true
                     return ACTION_BREAK;
                 }
 
+                //找出最左边的弹幕，以后会用
                 if (minRightRow == null) {
                     minRightRow = item;
                 } else {
@@ -160,13 +166,16 @@ public class DanmakusRetainer {
                 }
 
                 // 检查碰撞
+                // 检查插入弹幕是否会跟mVisibleDanmakus中的item碰撞，主要比较的是x轴方面上的碰撞（先比较时间，后比较宽度）
                 willHit = DanmakuUtils.willHitInDuration(disp, item, drawItem,
                         drawItem.getDuration(), drawItem.getTimer().currMillisecond);
                 if (!willHit) {
+                    //如果没有碰撞，则将它复制给参考弹幕insertItem准备插入
                     insertItem = item;
                     return ACTION_BREAK;
                 }
 
+                //只要一次循环lastItem就应该有值，代表了上一行；然后重新进入循环从下一行开始继续找位置
                 lastItem = item;
                 return ACTION_CONTINUE;
             }
@@ -309,10 +318,7 @@ public class DanmakusRetainer {
         @Override
         protected boolean isOutVerticalEdge(boolean overwriteInsert, BaseDanmaku drawItem,
                                             IDisplayer disp, float topPos, BaseDanmaku firstItem, BaseDanmaku lastItem) {
-            if (topPos + drawItem.paintHeight > disp.getHeight()) {
-                return true;
-            }
-            return false;
+            return topPos + drawItem.paintHeight > disp.getHeight();
         }
 
     }

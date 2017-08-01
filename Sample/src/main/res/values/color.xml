@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="unbound_btn_bg_text_color">#2fb3ff</color>
+    <color name="transparent">#00000000</color>
+</resources>

@@ -38,6 +38,7 @@ public class DrawTask implements IDrawTask {
     
     protected final AbsDisplayer mDisp;
 
+    // Sort by time 这个是主要的弹幕列表缓存，cache时也是根据这个列表取值的
     protected IDanmakus danmakuList;
 
     protected BaseDanmakuParser mParser;
@@ -48,6 +49,7 @@ public class DrawTask implements IDrawTask {
 
     DanmakuTimer mTimer;
 
+    // Sort by list 用来drawDanmakus绘画，在drawDanmakus()中会被danmakuList更新
     private IDanmakus danmakus = new Danmakus(Danmakus.ST_BY_LIST);
 
     protected boolean clearRetainerFlag;
@@ -230,7 +232,7 @@ public class DrawTask implements IDrawTask {
                 subDanmakus = danmakuList.subnew(beginMills, endMills);
                 break;
             } catch (Exception e) {
-
+                // ignore
             }
         }
         final IDanmakus visibleDanmakus = new Danmakus();
